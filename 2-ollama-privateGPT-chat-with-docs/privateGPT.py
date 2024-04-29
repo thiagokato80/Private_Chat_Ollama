@@ -20,7 +20,8 @@ import time
 
 load_dotenv()
 
-model = os.environ.get("MODEL", "mistral")
+model = os.environ.get("MODEL", "llama3")
+#model = os.environ.get("MODEL", "Mistral")
 # For embeddings model, the example uses a sentence-transformers model
 # https://www.sbert.net/docs/pretrained_models.html 
 # "The all-mpnet-base-v2 model provides the best quality, while all-MiniLM-L6-v2 is 5 times faster and still offers good quality."
@@ -41,9 +42,11 @@ def main():
     # activate/deactivate the streaming StdOut callback for LLMs
     callbacks = [] if args.mute_stream else [StreamingStdOutCallbackHandler()]
 
-    llm = Ollama(model=model, callbacks=callbacks)
+    #llm = Ollama(model=model, callbacks=callbacks)
+    llm = Ollama(model=model, verbose=False)
 
-    #qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
+    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
+
     # Interactive questions and answers
     while True:
         query = input("\nEnter a query: ")
@@ -55,18 +58,16 @@ def main():
         # Get the answer from the chain
         start = time.time()
 
-        template = """Given the {context}, answer the {question}"""
+        #template = """Given the {context}, answer the {question}"""
+        #prompt = ChatPromptTemplate.from_template(template)
+        #output_parser = StrOutputParser()
+        #setup_and_retrieval = RunnableParallel({"context": retriever, "question": query})
+        #chain = setup_and_retrieval | prompt | llm | output_parser
+        #res = chain.invoke(query)
 
-        prompt = ChatPromptTemplate.from_template(template)
-        output_parser = StrOutputParser()
-        setup_and_retrieval = RunnableParallel(
-            {"context": retriever, "question": query}
-            )
-
-        chain = setup_and_retrieval | prompt | llm | output_parser
-        res = chain.invoke(query)
-
+        res = qa.invoke(query)
         #res = qa(query)
+        
         answer, docs = res['result'], [] if args.hide_source else res['source_documents']
         end = time.time()
 
@@ -76,9 +77,9 @@ def main():
         print(answer)
 
         # Print the relevant sources used for the answer
-        for document in docs:
-            print("\n> " + document.metadata["source"] + ":")
-            print(document.page_content)
+        #for document in docs:
+            #print("\n> " + document.metadata["source"] + ":")
+            #print(document.page_content)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='privateGPT: Ask questions to your documents without an internet connection, '
