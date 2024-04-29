@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
 from langchain.chains import RetrievalQA
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.vectorstores import Chroma
-from langchain.llms import Ollama
+from langchain_community.vectorstores import Chroma
+
+from langchain_community.llms import Ollama
+#from langchain.llms import Ollama
+
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from dotenv import load_dotenv
+
 import chromadb
 import os
 import argparse
 import time
 
+load_dotenv()
+
 model = os.environ.get("MODEL", "mistral")
 # For embeddings model, the example uses a sentence-transformers model
 # https://www.sbert.net/docs/pretrained_models.html 
 # "The all-mpnet-base-v2 model provides the best quality, while all-MiniLM-L6-v2 is 5 times faster and still offers good quality."
-embeddings_model_name = os.environ.get("EMBEDDINGS_MODEL_NAME", "all-MiniLM-L6-v2")
+embeddings_model_name = os.environ.get("EMBEDDINGS_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 persist_directory = os.environ.get("PERSIST_DIRECTORY", "db")
 target_source_chunks = int(os.environ.get('TARGET_SOURCE_CHUNKS',4))
 
@@ -32,7 +43,7 @@ def main():
 
     llm = Ollama(model=model, callbacks=callbacks)
 
-    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
+    #qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
     # Interactive questions and answers
     while True:
         query = input("\nEnter a query: ")
@@ -43,7 +54,19 @@ def main():
 
         # Get the answer from the chain
         start = time.time()
-        res = qa(query)
+
+        template = """Given the {context}, answer the {question}"""
+
+        prompt = ChatPromptTemplate.from_template(template)
+        output_parser = StrOutputParser()
+        setup_and_retrieval = RunnableParallel(
+            {"context": retriever, "question": query}
+            )
+
+        chain = setup_and_retrieval | prompt | llm | output_parser
+        res = chain.invoke(query)
+
+        #res = qa(query)
         answer, docs = res['result'], [] if args.hide_source else res['source_documents']
         end = time.time()
 

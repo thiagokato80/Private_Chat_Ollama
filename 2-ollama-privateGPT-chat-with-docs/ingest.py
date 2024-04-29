@@ -5,7 +5,7 @@ from typing import List
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from langchain.document_loaders import (
+from langchain_community.document_loaders import (
     CSVLoader,
     EverNoteLoader,
     PyMuPDFLoader,
@@ -20,15 +20,17 @@ from langchain.document_loaders import (
 )
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 from constants import CHROMA_SETTINGS
 
 
 # Load environment variables
-persist_directory = os.environ.get('PERSIST_DIRECTORY', 'db')
-source_directory = os.environ.get('SOURCE_DIRECTORY', 'source_documents')
+persist_directory = os.environ.get('PERSIST_DIRECTORY',
+                                  'G:/Meu Drive/PersonalProj/GitHub/Private_chat_ollama/Private_Chat_Ollama/2-ollama-privateGPT-chat-with-docs/db')
+source_directory = os.environ.get('SOURCE_DIRECTORY', 
+                                  'G:/Meu Drive/PersonalProj/GitHub/Private_chat_ollama/Private_Chat_Ollama/2-ollama-privateGPT-chat-with-docs/source_documents')
 embeddings_model_name = os.environ.get('EMBEDDINGS_MODEL_NAME', 'all-MiniLM-L6-v2')
 chunk_size = 500
 chunk_overlap = 50
