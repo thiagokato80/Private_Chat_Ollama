@@ -20,8 +20,9 @@ import time
 
 load_dotenv()
 
-model = os.environ.get("MODEL", "llama3")
-#model = os.environ.get("MODEL", "Mistral")
+#model = os.environ.get("MODEL", "llama3")
+#model = os.environ.get("MODEL", "llama2")
+model = os.environ.get("MODEL", "Mistral")
 # For embeddings model, the example uses a sentence-transformers model
 # https://www.sbert.net/docs/pretrained_models.html 
 # "The all-mpnet-base-v2 model provides the best quality, while all-MiniLM-L6-v2 is 5 times faster and still offers good quality."
@@ -42,10 +43,14 @@ def main():
     # activate/deactivate the streaming StdOut callback for LLMs
     callbacks = [] if args.mute_stream else [StreamingStdOutCallbackHandler()]
 
-    #llm = Ollama(model=model, callbacks=callbacks)
-    llm = Ollama(model=model, verbose=False)
+    llm = Ollama(model=model, 
+                 verbose=False, 
+                 temperature=0,
+                 #callbacks=callbacks,
+                 )
 
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
+    #qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= args.hide_source)
 
     # Interactive questions and answers
     while True:
@@ -77,9 +82,9 @@ def main():
         print(answer)
 
         # Print the relevant sources used for the answer
-        #for document in docs:
-            #print("\n> " + document.metadata["source"] + ":")
-            #print(document.page_content)
+        for document in docs:
+            print("\n> " + document.metadata["source"] + ":")
+            print(document.page_content)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='privateGPT: Ask questions to your documents without an internet connection, '
